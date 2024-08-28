@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, "Password Is Required!"],
-    minLength: [8, "Password Must Contain At Least 8 Characters!"],
-    select: false,
+    minLength: [8, "Password Must Contain At Least 8 Characters!"]
+    
   },
   role: {
     type: String,
@@ -78,6 +78,7 @@ userSchema.pre("save", async function (next) {
 })
 
 userSchema.methods.generateAuthToken = async function (password) {
+  // console.log(this.password)
     return await bcrypt.compare(password,this.password)   
 }
 

@@ -7,7 +7,31 @@ import jwt from 'jsonwebtoken'
 import { uploadFileToCloudinary } from "../utils/cloudinary.js";
 
 
-//********************Registeration of Patient************************
+//*****************************Generate Access And Refresh Token ****************************************** */
+
+
+const generateAccessAndRefreshTokens = async(userId) =>{
+  try {
+      //generate access token
+      //generate refresh token
+      //return access and refresh tokens
+      const user = await User.findById(userId)
+      const accessToken = user.generateAccessToken()
+      const refreshToken = user.generateRefreshToken()
+
+      user.refreshToken = refreshToken
+      await user.save({validateBeforeSave:false})
+
+      return {accessToken, refreshToken}
+      
+  } catch (error) {
+      throw new ApiError(500, "Something went wrong while generating Access and Refresh Tokens")
+  }
+}
+
+//****************************************************************************************************************** */
+
+//**********************************Registeration of Patient*******************************************************
 
  const patientRegister = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, username, phone, nic, dob, gender, password } =
@@ -29,7 +53,7 @@ if(existedUser){
 }
 
 
-  const user = await User.create({
+  const patient = await User.create({
     firstName,
     lastName,
     email,
@@ -42,7 +66,7 @@ if(existedUser){
     role: "Patient",
   })
 
-  const createdUser = await User.findById(user._id).select("-password -refreshToken")
+  const createdUser = await User.findById(patient._id).select("-password -refreshToken")
   if(!createdUser){
     throw new ApiError(500, "Something went wrong registering the Patient")
   }
@@ -54,13 +78,15 @@ if(existedUser){
 });
 
 
-//*******************************************************************
+//*************************************************************************************************************
 
 
 
 
-//*****************Register a Doctor******************
- const addNewDoctor = asyncHandler(async (req, res) => {
+//********************************************Register a Doctor*****************************************************
+ 
+
+const addNewDoctor = asyncHandler(async (req, res) => {
       
       const {
         firstName,
@@ -109,7 +135,7 @@ if(existedUser){
     }
 
 
-    const user = await User.create({
+    const doctor = await User.create({
         docAvatar: docAvatar.url,
         firstName,
         lastName,
@@ -124,7 +150,7 @@ if(existedUser){
         role: "Doctor",
       })
 
-      const createdUser = await User.findById(user._id).select("-password -refreshToken")
+      const createdUser = await User.findById(doctor._id).select("-password -refreshToken")
       if(!createdUser){
         throw new ApiError(500, "Something went wrong registering the Doctor")
       }
@@ -136,7 +162,154 @@ if(existedUser){
     });
 
 
-    //******************************************** */
+    //*****************************************************************************************************
+
+//********************************************Register Admin*******************************************************
+
+ const addNewAdmin = asyncHandler(async (req, res) => {
+  const { firstName, lastName, username, email, phone, nic, dob, gender, password } =
+    req.body;
+
+    if([firstName, lastName, email, username, phone, nic, dob, gender, password].some((field) =>
+        field?.trim() === "")){
+   throw new ApiError(400, "All fields are required")
+}
+  
+
+const existedUser = await User.findOne({
+    $or: [{ username }, { email }]
+  })
+
+  if(existedUser){
+    throw new ApiError(409, "User with email or username already exists")
+  }
+
+  const admin = await User.create({
+    firstName,
+    lastName,
+    email,
+    username,
+    phone,
+    nic,
+    dob,
+    gender,
+    password,
+    role: "Admin",
+  });
+
+  const createdUser = await User.findById(admin._id).select("-password -refreshToken")
+  if(!createdUser){
+    throw new ApiError(500, "Something went wrong registering the Admin")
+  }
+
+  return res.status(201).json(
+    new ApiResponse(200, createdUser, "Admin registered successfully")
+  )
+
+
+  
+});
+
+//********************************************************************************************************************
+
+
+
+//******************************************************User Login **************************************** */
+ const login = asyncHandler(async (req, res) => {
+
+  const { email, password, username, confirmPassword, role } = req.body;
+// console.log(email, password, username, confirmPassword, role)
+  if([(email || username), password, confirmPassword, role].some((field) =>
+    field?.trim() === "")){
+throw new ApiError(400, "All fields are required")
+}
+  
+  if (password !== confirmPassword) {
+    throw new ApiError(400, "Password not matched with confirm password")
+  }
+  const user = await User.findOne({
+    $or: [{username}, {email}]
+})
+
+// console.log(user)
+
+if(!user){
+  throw new ApiError(404, "User does not exist")
+}
+
+const isPasswordValid = await user.generateAuthToken(password)
+
+if(!isPasswordValid){
+  throw new ApiError(401, "Invalid credentials")
+}
+
+const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
+
+const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+if(!loggedInUser){
+  throw new ApiError(500, "Something went wrong while logging in")
+}
+
+const options = {
+  httpOnly: true,
+  secure: false
+}
+
+return res
+.status(200)
+.cookie("accessToken",accessToken,options)
+.cookie("refreshToken",refreshToken,options)
+.json(
+  new ApiResponse(200,
+    {
+      user: loggedInUser,accessToken,refreshToken
+    }
+    , "Logged in successfully")
+)
+ 
+});
+
+//********************************************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -170,44 +343,14 @@ if(existedUser){
 //   generateToken(user, "Login Successfully!", 201, res);
 // });
 
-// export const addNewAdmin = catchAsyncErrors(async (req, res, next) => {
-//   const { firstName, lastName, email, phone, nic, dob, gender, password } =
-//     req.body;
-//   if (
-//     !firstName ||
-//     !lastName ||
-//     !email ||
-//     !phone ||
-//     !nic ||
-//     !dob ||
-//     !gender ||
-//     !password
-//   ) {
-//     return next(new ErrorHandler("Please Fill Full Form!", 400));
-//   }
 
-//   const isRegistered = await User.findOne({ email });
-//   if (isRegistered) {
-//     return next(new ErrorHandler("Admin With This Email Already Exists!", 400));
-//   }
 
-//   const admin = await User.create({
-//     firstName,
-//     lastName,
-//     email,
-//     phone,
-//     nic,
-//     dob,
-//     gender,
-//     password,
-//     role: "Admin",
-//   });
-//   res.status(200).json({
-//     success: true,
-//     message: "New Admin Registered",
-//     admin,
-//   });
-// });
+
+
+
+
+
+
 
 // 
 
@@ -255,4 +398,4 @@ if(existedUser){
 //     });
 // });
 
-export {patientRegister,addNewDoctor};
+export {patientRegister,addNewDoctor,addNewAdmin,login};
