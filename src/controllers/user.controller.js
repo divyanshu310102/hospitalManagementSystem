@@ -3,12 +3,10 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import jwt from 'jsonwebtoken'
 import { uploadFileToCloudinary } from "../utils/cloudinary.js";
 
 
 //*****************************Generate Access And Refresh Token ****************************************** */
-
 
 const generateAccessAndRefreshTokens = async(userId) =>{
   try {
@@ -30,6 +28,9 @@ const generateAccessAndRefreshTokens = async(userId) =>{
 }
 
 //****************************************************************************************************************** */
+
+
+
 
 //**********************************Registeration of Patient*******************************************************
 
@@ -77,14 +78,12 @@ if(existedUser){
   
 });
 
-
 //*************************************************************************************************************
 
 
 
 
-//********************************************Register a Doctor*****************************************************
- 
+//********************************************Register a Doctor***************************************************** 
 
 const addNewDoctor = asyncHandler(async (req, res) => {
       
@@ -161,8 +160,11 @@ const addNewDoctor = asyncHandler(async (req, res) => {
      
     });
 
-
     //*****************************************************************************************************
+
+
+
+
 
 //********************************************Register Admin*******************************************************
 
@@ -214,7 +216,11 @@ const existedUser = await User.findOne({
 
 
 
+
+
+
 //******************************************************User Login **************************************** */
+
  const login = asyncHandler(async (req, res) => {
 
   const { email, password, username, confirmPassword, role } = req.body;
@@ -274,6 +280,19 @@ return res
 
 
 
+//**************************************************Get user details************************************************* */
+
+ const getUserDetails = asyncHandler(async (req, res) => {
+  const user = req.user;
+  console.log(user)
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(200,user,"User fetched successfully")
+  );
+});
+
+//***************************************************************************************************************** */
 
 
 
@@ -288,87 +307,6 @@ return res
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// export const login = catchAsyncErrors(async (req, res, next) => {
-//   const { email, password, confirmPassword, role } = req.body;
-//   if (!email || !password || !confirmPassword || !role) {
-//     return next(new ErrorHandler("Please Fill Full Form!", 400));
-//   }
-//   if (password !== confirmPassword) {
-//     return next(
-//       new ErrorHandler("Password & Confirm Password Do Not Match!", 400)
-//     );
-//   }
-//   const user = await User.findOne({ email }).select("+password");
-//   if (!user) {
-//     return next(new ErrorHandler("Invalid Email Or Password!", 400));
-//   }
-
-//   const isPasswordMatch = await user.comparePassword(password);
-//   if (!isPasswordMatch) {
-//     return next(new ErrorHandler("Invalid Email Or Password!", 400));
-//   }
-//   if (role !== user.role) {
-//     return next(new ErrorHandler(`User Not Found With This Role!`, 400));
-//   }
-//   generateToken(user, "Login Successfully!", 201, res);
-// });
-
-
-
-
-
-
-
-
-
-
-// 
-
-// export const getAllDoctors = catchAsyncErrors(async (req, res, next) => {
-//   const doctors = await User.find({ role: "Doctor" });
-//   res.status(200).json({
-//     success: true,
-//     doctors,
-//   });
-// });
-
-// export const getUserDetails = catchAsyncErrors(async (req, res, next) => {
-//   const user = req.user;
-//   res.status(200).json({
-//     success: true,
-//     user,
-//   });
-// });
 
 // // Logout function for dashboard admin
 // export const logoutAdmin = catchAsyncErrors(async (req, res, next) => {
@@ -398,4 +336,4 @@ return res
 //     });
 // });
 
-export {patientRegister,addNewDoctor,addNewAdmin,login};
+export {patientRegister,addNewDoctor,addNewAdmin,login,getUserDetails};
