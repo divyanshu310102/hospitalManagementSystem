@@ -297,6 +297,35 @@ return res
 
 
 
+//**************************************************LogOut User************************************************* */
+
+const logoutUser = asyncHandler(async (req, res) => {
+
+  await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      $set:{
+        refreshToken: undefined
+      }  
+    },
+    {
+      new : true
+    }
+  )
+
+  const options = {
+    httpOnly: true,
+    secure : false
+}
+
+  return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(new ApiResponse(200, "User logged out successfully"))
+})
+
+//*************************************************************************************************************** */
 
 
 
@@ -336,4 +365,4 @@ return res
 //     });
 // });
 
-export {patientRegister,addNewDoctor,addNewAdmin,login,getUserDetails};
+export {patientRegister,addNewDoctor,addNewAdmin,login,getUserDetails,logoutUser};
