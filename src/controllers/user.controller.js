@@ -86,7 +86,7 @@ if(existedUser){
 //********************************************Register a Doctor***************************************************** 
 
 const addNewDoctor = asyncHandler(async (req, res) => {
-      
+       
       const {
         firstName,
         lastName,
@@ -99,6 +99,17 @@ const addNewDoctor = asyncHandler(async (req, res) => {
         password,
         doctorDepartment
       } = req.body;
+
+      console.log(firstName,
+        lastName,
+        username,
+        email,
+        phone,
+        nic,
+        dob,
+        gender,
+        password,
+        doctorDepartment)
 
       if([firstName,
         lastName,
@@ -224,7 +235,7 @@ const existedUser = await User.findOne({
  const login = asyncHandler(async (req, res) => {
 
   const { email, password, username, confirmPassword, role } = req.body;
-// console.log(email, password, username, confirmPassword, role)
+console.log(email, password, username, confirmPassword, role)
   if([(email || username), password, confirmPassword, role].some((field) =>
     field?.trim() === "")){
 throw new ApiError(400, "All fields are required")
@@ -237,7 +248,7 @@ throw new ApiError(400, "All fields are required")
     $or: [{username}, {email}]
 })
 
-// console.log(user)
+console.log(user)
 
 if(!user){
   throw new ApiError(404, "User does not exist")
@@ -328,6 +339,20 @@ const logoutUser = asyncHandler(async (req, res) => {
 //*************************************************************************************************************** */
 
 
+const getAllDoctors = asyncHandler(async (req,res) => {
+  const doctors = await User.find(
+    {
+      role: "Doctor"
+    }
+  ).select("firstName lastName doctorDepartment")
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(200,doctors,"Doctors listed succesfully!!")
+  )
+})
+
 
 
 
@@ -365,4 +390,4 @@ const logoutUser = asyncHandler(async (req, res) => {
 //     });
 // });
 
-export {patientRegister,addNewDoctor,addNewAdmin,login,getUserDetails,logoutUser};
+export {patientRegister,addNewDoctor,addNewAdmin,login,getUserDetails,logoutUser,getAllDoctors};

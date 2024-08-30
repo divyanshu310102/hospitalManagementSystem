@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import multer from 'multer';
 import userRouter from './routes/user.route.js';
+import appointmentRouter from './routes/appointment.route.js';
 
 const app = express();
 
@@ -14,12 +14,11 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json({ limit: "16kb" }));
 app.use(express.static("public"));
-app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "160kb" }));
 
-// Multer setup for handling multipart/form-data
-const upload = multer();
-app.use(upload.any()); // This allows handling multipart form data
+
 
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/appointment", appointmentRouter)
 
 export { app };
